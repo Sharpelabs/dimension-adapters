@@ -86,7 +86,8 @@ async function getAdapterData(
       }
     })
   );
-
+  var docName = adapterName.replace(".ts", "").toLowerCase();
+  console.log(adapterName, docName)
   if ("adapter" in module) {
     const adapter = module.adapter;
     // Get adapter
@@ -107,7 +108,7 @@ async function getAdapterData(
     });
     // printVolumes(volumes, adapter)
     // console.info("\n")
-    await couchClient.insert(`defi-${adapterType}/${adapterName}`, volumes);
+    await couchClient.insert(`defi-${adapterType}/${docName}`, volumes);
   } else if ("breakdown" in module) {
     const breakdownAdapter = module.breakdown;
     const allVolumes = await Promise.all(
@@ -117,7 +118,21 @@ async function getAdapterData(
         }).then((res) => ({ version, res }))
       )
     );
-    allVolumes.forEach(({ version, res }) => {
+    // allVolumes.forEach(({ version, res }) => {
+    //   // console.info("Version ->", version.toUpperCase())
+    //   // console.info("---------")
+    //   // printVolumes(res, breakdownAdapter[version])
+    //   res.forEach((element) => {
+    //     var methodology =
+    //       breakdownAdapter[version]?.[element.chain].meta?.methodology;
+    //     if (!methodology) methodology = "NO METHODOLOGY SPECIFIED";
+    //     element.methodology = methodology;
+    //   });
+    //   console.log(version);
+    //   await couchClient.insert(`defi-${adapterType}/${docName}-${version}`, allVolumes);
+    // });
+
+    for (const { version, res } of allVolumes) {
       // console.info("Version ->", version.toUpperCase())
       // console.info("---------")
       // printVolumes(res, breakdownAdapter[version])
@@ -127,8 +142,9 @@ async function getAdapterData(
         if (!methodology) methodology = "NO METHODOLOGY SPECIFIED";
         element.methodology = methodology;
       });
-    });
-    await couchClient.insert(`defi-${adapterType}/${adapterName}`, allVolumes);
+      await couchClient.insert(`defi-${adapterType}/${docName}-${version}`, res);
+    }
+
   } else throw new Error("No compatible adapter found");
 
   // process.exit(0);
@@ -143,13 +159,11 @@ export async function getAllAdapters(type: string) {
   );
   console.log(files.length);
   for (let i = 0; i < files.length; i++) {
-    // console.log(i, files[i]);
     if (files[i] == "Omnidrome") continue
     try {
       await getAdapterData(files[i], type);
     } catch (e) {
       continue
-      // console.log(e.message);
     }
   };
 }
