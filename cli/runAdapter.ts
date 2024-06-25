@@ -41,10 +41,7 @@ async function getAdapterData(
   const adapterType: AdapterType = type as AdapterType;
   const file = `${adapterType}/${adapterName}`;
 
-  const passedFile = path.resolve(
-    process.cwd(),
-    `./${file}`
-  );
+  const passedFile = path.resolve(process.cwd(), `./${file}`);
   const cleanDayTimestamp = timestamp
     ? Number(timestamp)
     : getUniqStartOfTodayTimestamp(new Date());
@@ -78,7 +75,7 @@ async function getAdapterData(
           chainBlocks
         ).catch(() => null);
         // ).catch((e: any) =>
-          // console.error(`${e.message}; ${endTimestamp}, ${chain}`)
+        // console.error(`${e.message}; ${endTimestamp}, ${chain}`)
         // );
         if (latestBlock) chainBlocks[chain] = latestBlock;
       } catch (e) {
@@ -87,7 +84,7 @@ async function getAdapterData(
     })
   );
   var docName = adapterName.replace(".ts", "").toLowerCase();
-  console.log(adapterName, docName)
+  var dbName = type !== "fees" ? "dexs" : "fees";
   if ("adapter" in module) {
     const adapter = module.adapter;
     // Get adapter
@@ -108,7 +105,8 @@ async function getAdapterData(
     });
     // printVolumes(volumes, adapter)
     // console.info("\n")
-    await couchClient.insert(`defi-${adapterType}/${docName}`, volumes);
+    // console.log(`defi-${dbName}/${docName}`);
+    await couchClient.insert(`defi-${dbName}/${docName}`, volumes);
   } else if ("breakdown" in module) {
     const breakdownAdapter = module.breakdown;
     const allVolumes = await Promise.all(
@@ -118,6 +116,7 @@ async function getAdapterData(
         }).then((res) => ({ version, res }))
       )
     );
+
     // allVolumes.forEach(({ version, res }) => {
     //   // console.info("Version ->", version.toUpperCase())
     //   // console.info("---------")
@@ -129,9 +128,8 @@ async function getAdapterData(
     //     element.methodology = methodology;
     //   });
     //   console.log(version);
-    //   await couchClient.insert(`defi-${adapterType}/${docName}-${version}`, allVolumes);
+    //   await couchClient.insert(`defi-${dbName}/${docName}-${version}`, allVolumes);
     // });
-
     for (const { version, res } of allVolumes) {
       // console.info("Version ->", version.toUpperCase())
       // console.info("---------")
@@ -142,9 +140,9 @@ async function getAdapterData(
         if (!methodology) methodology = "NO METHODOLOGY SPECIFIED";
         element.methodology = methodology;
       });
-      await couchClient.insert(`defi-${adapterType}/${docName}-${version}`, res);
+      // console.log(`defi-${dbName}/${docName}-${version}`)
+      await couchClient.insert(`defi-${dbName}/${docName}-${version}`, res);
     }
-
   } else throw new Error("No compatible adapter found");
 
   // process.exit(0);
@@ -152,18 +150,21 @@ async function getAdapterData(
 
 export async function getAllAdapters(type: string) {
   const directoryPath = `/home/ubuntu/dimension-adapters/${type}/`;
-  
+
   const pathFiles = fs.readdirSync(directoryPath);
-  const files = pathFiles.filter((file) =>
-    fs.statSync(path.join(directoryPath, file)).isDirectory() || fs.statSync(path.join(directoryPath, file)).isFile()
+  const files = pathFiles.filter(
+    (file) =>
+      fs.statSync(path.join(directoryPath, file)).isDirectory() ||
+      fs.statSync(path.join(directoryPath, file)).isFile()
   );
-  console.log(files.length);
+  console.log("\n", type, files.length, "\n");
   for (let i = 0; i < files.length; i++) {
-    if (files[i] == "Omnidrome") continue
+    if (files[i] == "Omnidrome") continue;
     try {
+      console.log(i, files[i]);
       await getAdapterData(files[i], type);
     } catch (e) {
-      continue
+      continue;
     }
-  };
+  }
 }
