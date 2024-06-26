@@ -37,6 +37,17 @@ class CouchDBClient {
             console.error('Error inserting document:', error);
         }
     }
+
+    async retrieve(key) {
+        const [dbName, docId] = key.split('/');
+        try {
+            const db = this.couch.use(dbName);
+            const doc = await db.get(docId);
+            return doc.data;
+        } catch (error) {
+            console.error('Error retrieving document:', error);
+        }
+    }
 }
 
 module.exports = CouchDBClient;

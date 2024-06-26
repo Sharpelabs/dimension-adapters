@@ -83,8 +83,11 @@ async function getAdapterData(
       }
     })
   );
-  var docName = adapterName.replace(".ts", "").toLowerCase();
+  const moduleSlugs = await couchClient.retrieve("cache/module-slugs");
   var dbName = type !== "fees" ? "dexs" : "fees";
+  var docName = type === "fees" ? adapterName.replace(".ts", "").toLowerCase() : moduleSlugs[adapterName];
+  // console.log(dbName, docName)
+
   if ("adapter" in module) {
     const adapter = module.adapter;
     // Get adapter
@@ -161,9 +164,10 @@ export async function getAllAdapters(type: string) {
   for (let i = 0; i < files.length; i++) {
     if (files[i] == "Omnidrome") continue;
     try {
-      console.log(i, files[i]);
+      // console.log(i, files[i]);
       await getAdapterData(files[i], type);
     } catch (e) {
+      // console.log(e);
       continue;
     }
   }
