@@ -162,9 +162,9 @@ export async function getAllAdapters(type: string) {
   );
   console.log("\n", type, files.length, "\n");
   for (let i = 0; i < files.length; i++) {
-    if (files[i] == "Omnidrome") continue;
+    if (files[i] in ["Omnidrome"]) continue;
     try {
-      // console.log(i, files[i]);
+      console.log(i, files[i]);
       await getAdapterData(files[i], type);
     } catch (e) {
       // console.log(e);
